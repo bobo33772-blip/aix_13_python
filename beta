@@ -1,0 +1,77 @@
+import tkinter as tk
+import random
+
+SIZE = 10
+MINE_COUNT = 10
+
+# 데이터
+board = [[0]*SIZE for _ in range(SIZE)]
+buttons = [[None]*SIZE for _ in range(SIZE)]
+opened = [[False]*SIZE for _ in range(SIZE)]
+
+dirs = [(-1,-1),(-1,0),(-1,1),(0,1),(1,1),(1,0),(1,-1),(0,-1)]
+
+# 지뢰 배치
+count = 0
+while count < MINE_COUNT:
+    r = random.randint(0, SIZE-1)
+    c = random.randint(0, SIZE-1)
+
+    if board[r][c] == 9:
+        continue
+
+    board[r][c] = 9
+    count += 1
+
+    for dr, dc in dirs:
+        nr, nc = r+dr, c+dc
+        if 0 <= nr < SIZE and 0 <= nc < SIZE:
+            if board[nr][nc] != 9:
+                board[nr][nc] += 1
+
+# 0 자동 확장
+def open_cell(r, c):
+    if not (0 <= r < SIZE and 0 <= c < SIZE):
+        return
+    if opened[r][c]:
+        return
+
+    opened[r][c] = True
+    btn = buttons[r][c]
+    btn.config(relief="sunken", state="disabled")
+
+    if board[r][c] == 0:
+        btn.config(text="")
+        for dr, dc in dirs:
+            open_cell(r+dr, c+dc)
+    else:
+        btn.config(text=str(board[r][c]))
+
+# 클릭 이벤트
+def click(r, c):
+    if board[r][c] == 9:
+        buttons[r][c].config(text="💣", bg="red")
+        game_over()
+    else:
+        open_cell(r, c)
+
+# 게임 오버
+def game_over():
+    for r in range(SIZE):
+        for c in range(SIZE):
+            if board[r][c] == 9:
+                buttons[r][c].config(text="💣")
+            buttons[r][c].config(state="disabled")
+
+# GUI 생성
+root = tk.Tk()
+root.title("지뢰찾기")
+
+for r in range(SIZE):
+    for c in range(SIZE):
+        btn = tk.Button(root, width=3, height=1,
+                        command=lambda r=r, c=c: click(r,c))
+        btn.grid(row=r, column=c)
+        buttons[r][c] = btn
+
+root.mainloop()
